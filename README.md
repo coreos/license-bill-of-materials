@@ -20,6 +20,20 @@ The output might have three array of records:
 - Matched/Guessed license projects
 - Error projects
 
+The error projects can be overrided by a file using `--override` flag.
+
+Example file
+
+```
+[
+	{
+		"project": "k8s.io/kubernetes",
+		"license": "Apache License 2.0",
+		"confidence": 1
+	}
+]
+```
+
 Example output of Kubernetes API server:
 
 ```bash

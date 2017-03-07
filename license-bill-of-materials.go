@@ -588,11 +588,32 @@ func truncateFloat(f float64) float64 {
 }
 
 func main() {
+	of := flag.String("override-file", "", "a file to overwrite licenses")
 	flag.Parse()
 	if flag.NArg() < 1 {
 		log.Fatal("expect at least one package argument")
 	}
+
 	pkgs := flag.Args()
+
+	var fpl []projectAndLicense
+	fplm := make(map[string]string)
+
+	if len(*of) != 0 {
+		b, err := ioutil.ReadFile(*of)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = json.Unmarshal(b, &fpl)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, pl := range fpl {
+			fplm[pl.Project] = pl.License
+		}
+	}
 
 	licenses, err := listLicenses("", pkgs)
 	if err != nil {
@@ -605,6 +626,19 @@ func main() {
 
 	c, e := licensesToProjectAndLicenses(licenses)
 
+	var ne []projectAndLicense
+	for _, pl := range e {
+		if l, ok := fplm[pl.Project]; ok {
+			c = append(c, projectAndLicense{
+				Project:    pl.Project,
+				License:    l,
+				Confidence: 1.0,
+			})
+		} else {
+			ne = append(ne, pl)
+		}
+	}
+
 	if c == nil {
 		c = make([]projectAndLicense, 0)
 	}
@@ -614,9 +648,9 @@ func main() {
 	}
 	fmt.Println(string(b))
 
-	if len(e) != 0 {
+	if len(ne) != 0 {
 		fmt.Println("")
-		b, err := json.MarshalIndent(e, "", "	")
+		b, err := json.MarshalIndent(ne, "", "	")
 		if err != nil {
 			log.Fatal(err)
 		}
