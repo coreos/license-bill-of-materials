@@ -29,7 +29,6 @@ Example file
 	{
 		"project": "k8s.io/kubernetes",
 		"license": "Apache License 2.0",
-		"confidence": 1
 	}
 ]
 ```
