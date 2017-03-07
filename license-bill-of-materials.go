@@ -550,6 +550,13 @@ func licensesToProjectAndLicenses(licenses []License) (c []projectAndLicense, e 
 			})
 			continue
 		}
+		if l.Template == nil {
+			e = append(e, projectAndLicense{
+				Project: removeVendor(l.Package),
+				Error:   "No license detected",
+			})
+			continue
+		}
 		pl := projectAndLicense{
 			Project:    removeVendor(l.Package),
 			License:    l.Template.Title,
@@ -598,6 +605,9 @@ func main() {
 
 	c, e := licensesToProjectAndLicenses(licenses)
 
+	if c == nil {
+		c = make([]projectAndLicense, 0)
+	}
 	b, err := json.MarshalIndent(c, "", "	")
 	if err != nil {
 		log.Fatal(err)
