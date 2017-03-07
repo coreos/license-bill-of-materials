@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/pmezard/licenses/assets"
@@ -540,8 +541,7 @@ type projectAndLicense struct {
 	Error      string  `json:"error,omitempty"`
 }
 
-func licensesToProjectAndLicenses(licenses []License) (c []projectAndLicense, u []projectAndLicense, e []projectAndLicense) {
-	cs := 0.9
+func licensesToProjectAndLicenses(licenses []License) (c []projectAndLicense, e []projectAndLicense) {
 	for _, l := range licenses {
 		if l.Err != "" {
 			e = append(e, projectAndLicense{
@@ -550,22 +550,14 @@ func licensesToProjectAndLicenses(licenses []License) (c []projectAndLicense, u 
 			})
 			continue
 		}
-		if l.Score > cs {
-			pl := projectAndLicense{
-				Project: removeVendor(l.Package),
-				License: l.Template.Title,
-			}
-			c = append(c, pl)
-		} else {
-			pl := projectAndLicense{
-				Project:    removeVendor(l.Package),
-				License:    l.Template.Title,
-				Confidence: l.Score,
-			}
-			u = append(u, pl)
+		pl := projectAndLicense{
+			Project:    removeVendor(l.Package),
+			License:    l.Template.Title,
+			Confidence: truncateFloat(l.Score),
 		}
+		c = append(c, pl)
 	}
-	return c, u, e
+	return c, e
 }
 
 func removeVendor(s string) string {
@@ -575,6 +567,17 @@ func removeVendor(s string) string {
 		return s
 	}
 	return s[i+len(v):]
+}
+
+func truncateFloat(f float64) float64 {
+	nf := fmt.Sprintf("%.3f", f)
+
+	var err error
+	f, err = strconv.ParseFloat(nf, 64)
+	if err != nil {
+		panic("unexpected parse float error")
+	}
+	return f
 }
 
 func main() {
@@ -593,7 +596,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	c, u, e := licensesToProjectAndLicenses(licenses)
+	c, e := licensesToProjectAndLicenses(licenses)
 
 	b, err := json.MarshalIndent(c, "", "	")
 	if err != nil {
@@ -601,18 +604,9 @@ func main() {
 	}
 	fmt.Println(string(b))
 
-	if len(u) != 0 {
-		fmt.Println("")
-		b, err := json.MarshalIndent(u, "", "	")
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(string(b))
-	}
-
 	if len(e) != 0 {
 		fmt.Println("")
-		b, err := json.MarshalIndent(u, "", "	")
+		b, err := json.MarshalIndent(e, "", "	")
 		if err != nil {
 			log.Fatal(err)
 		}
