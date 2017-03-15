@@ -1,0 +1,12 @@
+[
+	{
+		"project": "github.com/coreos/license-bill-of-materials",
+		"license": "MIT License",
+		"confidence": 0.989
+	},
+	{
+		"project": "github.com/pmezard/licenses/assets",
+		"license": "The Unlicense",
+		"confidence": 0.847
+	}
+]
