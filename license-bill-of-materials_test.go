@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -210,5 +212,35 @@ func TestStandardPackages(t *testing.T) {
 	err := compareTestLicenses([]string{"encoding/json", "cmd/addr2line"}, []testResult{})
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestOverrides(t *testing.T) {
+	wl := []projectAndLicense{
+		{Project: "colors/broken", License: "GNU General Public License v3.0", Confidence: 1},
+		{Project: "colors/red", License: "override existing", Confidence: 1},
+		{Project: "colors/missing", License: "override missing", Confidence: 1},
+	}
+	override := `[
+		{"project": "colors/missing", "license": "override missing"},
+		{"project": "colors/red", "license": "override existing"}
+	]`
+
+	wd, derr := os.Getwd()
+	if derr != nil {
+		t.Fatal(derr)
+	}
+	oldenv := os.Getenv("GOPATH")
+	defer os.Setenv("GOPATH", oldenv)
+	os.Setenv("GOPATH", filepath.Join(wd, "testdata"))
+
+	c, e := pkgsToLicenses([]string{"colors/broken"}, override)
+	if len(e) != 0 {
+		t.Fatalf("got %+v errors, expected nothing", e)
+	}
+	for i := range c {
+		if !reflect.DeepEqual(wl[i], c[i]) {
+			t.Errorf("#%d: got %+v, expected %+v", i, c[i], wl[i])
+		}
 	}
 }
