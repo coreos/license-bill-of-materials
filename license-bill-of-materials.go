@@ -587,49 +587,41 @@ func truncateFloat(f float64) float64 {
 	return f
 }
 
-func main() {
-	of := flag.String("override-file", "", "a file to overwrite licenses")
-	flag.Parse()
-	if flag.NArg() < 1 {
-		log.Fatal("expect at least one package argument")
-	}
-
-	pkgs := flag.Args()
-
-	var fpl []projectAndLicense
+func pkgsToLicenses(pkgs []string, overrides string) (pls []projectAndLicense, ne []projectAndLicense) {
 	fplm := make(map[string]string)
-
-	if len(*of) != 0 {
-		b, err := ioutil.ReadFile(*of)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = json.Unmarshal(b, &fpl)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		for _, pl := range fpl {
-			fplm[pl.Project] = pl.License
-		}
+	if err := json.Unmarshal([]byte(overrides), &pls); err != nil {
+		log.Fatal(err)
+	}
+	for _, pl := range pls {
+		fplm[pl.Project] = pl.License
 	}
 
 	licenses, err := listLicenses("", pkgs)
 	if err != nil {
 		log.Fatal(err)
 	}
-	licenses, err = groupLicenses(licenses)
-	if err != nil {
+	if licenses, err = groupLicenses(licenses); err != nil {
 		log.Fatal(err)
 	}
-
 	c, e := licensesToProjectAndLicenses(licenses)
 
-	var ne []projectAndLicense
+	// detected licenses
+	pls = nil
+	for _, pl := range c {
+		if l, ok := fplm[pl.Project]; ok {
+			pl = projectAndLicense{
+				Project:    pl.Project,
+				License:    l,
+				Confidence: 1.0,
+			}
+		}
+		pls = append(pls, pl)
+	}
+
+	// missing / error license
 	for _, pl := range e {
 		if l, ok := fplm[pl.Project]; ok {
-			c = append(c, projectAndLicense{
+			pls = append(pls, projectAndLicense{
 				Project:    pl.Project,
 				License:    l,
 				Confidence: 1.0,
@@ -639,9 +631,26 @@ func main() {
 		}
 	}
 
-	if c == nil {
-		c = make([]projectAndLicense, 0)
+	return pls, ne
+}
+
+func main() {
+	of := flag.String("override-file", "", "a file to overwrite licenses")
+	flag.Parse()
+	if flag.NArg() < 1 {
+		log.Fatal("expect at least one package argument")
 	}
+
+	overrides := ""
+	if len(*of) != 0 {
+		b, err := ioutil.ReadFile(*of)
+		if err != nil {
+			log.Fatal(err)
+		}
+		overrides = string(b)
+	}
+
+	c, ne := pkgsToLicenses(flag.Args(), overrides)
 	b, err := json.MarshalIndent(c, "", "	")
 	if err != nil {
 		log.Fatal(err)

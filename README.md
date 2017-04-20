@@ -20,7 +20,7 @@ The output might have three array of records:
 - Matched/Guessed license projects
 - Error projects
 
-The error projects can be overrided by a file using `--override` flag.
+Miscategorized and error projects can be overridden with a file by using the `--override` flag.
 
 Example file
 
