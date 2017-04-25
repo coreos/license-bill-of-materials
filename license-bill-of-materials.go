@@ -651,7 +651,7 @@ func main() {
 		log.Fatal("expect at least one package argument")
 	}
 
-	overrides := ""
+	overrides := "[]"
 	if len(*of) != 0 {
 		b, err := ioutil.ReadFile(*of)
 		if err != nil {
