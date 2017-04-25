@@ -614,19 +614,21 @@ func pkgsToLicenses(pkgs []string, overrides string) (pls []projectAndLicense, n
 				License:    l,
 				Confidence: 1.0,
 			}
+			delete(fplm, pl.Project)
 		}
 		pls = append(pls, pl)
 	}
-
+	// force add undetected licenses given by overrides
+	for proj, l := range fplm {
+		pls = append(pls, projectAndLicense{
+			Project:    proj,
+			License:    l,
+			Confidence: 1.0,
+		})
+	}
 	// missing / error license
 	for _, pl := range e {
-		if l, ok := fplm[pl.Project]; ok {
-			pls = append(pls, projectAndLicense{
-				Project:    pl.Project,
-				License:    l,
-				Confidence: 1.0,
-			})
-		} else {
+		if _, ok := fplm[pl.Project]; !ok {
 			ne = append(ne, pl)
 		}
 	}
