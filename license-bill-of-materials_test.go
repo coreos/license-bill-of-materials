@@ -244,3 +244,41 @@ func TestOverrides(t *testing.T) {
 		}
 	}
 }
+
+func TestLongestPrefix(t *testing.T) {
+	tests := []struct {
+		lics []License
+
+		wpfx string
+	}{
+		{
+			[]License{
+				{Package: "a/b/c"},
+				{Package: "a/b/c/d"},
+			},
+			"a/b/c",
+		},
+		{
+			[]License{
+				{Package: "a/b/c"},
+				{Package: "a/b/c/d"},
+				{Package: "a/b/c/d/e"},
+			},
+			"a/b/c",
+		},
+		{
+			[]License{
+				{Package: "a/b"},
+				{Package: "a/b/c/d/f"},
+				{Package: "a/b/c/d/e"},
+			},
+			"a/b",
+		},
+	}
+
+	for i, tt := range tests {
+		if s := longestCommonPrefix(tt.lics); s != tt.wpfx {
+			t.Errorf("#%d: got %q, expected %q", i, s, tt.wpfx)
+		}
+	}
+}
