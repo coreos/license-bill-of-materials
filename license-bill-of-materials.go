@@ -462,10 +462,12 @@ func longestCommonPrefix(licenses []License) string {
 	type Node struct {
 		Name     string
 		Children map[string]*Node
+		Shared   int
 	}
 	// Build a prefix tree. Not super efficient, but easy to do.
 	root := &Node{
 		Children: map[string]*Node{},
+		Shared:   len(licenses),
 	}
 	for _, l := range licenses {
 		n := root
@@ -478,6 +480,7 @@ func longestCommonPrefix(licenses []License) string {
 				}
 				n.Children[part] = c
 			}
+			c.Shared++
 			n = c
 		}
 	}
@@ -488,7 +491,12 @@ func longestCommonPrefix(licenses []License) string {
 			break
 		}
 		for _, c := range n.Children {
-			prefix = append(prefix, c.Name)
+			if c.Shared == len(licenses) {
+				// Handle case where there are subpackages:
+				// prometheus/procfs
+				// prometheus/procfs/xfs
+				prefix = append(prefix, c.Name)
+			}
 			n = c
 			break
 		}
@@ -643,7 +651,7 @@ func main() {
 		log.Fatal("expect at least one package argument")
 	}
 
-	overrides := ""
+	overrides := "[]"
 	if len(*of) != 0 {
 		b, err := ioutil.ReadFile(*of)
 		if err != nil {
