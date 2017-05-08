@@ -641,6 +641,8 @@ func pkgsToLicenses(pkgs []string, overrides string) (pls []projectAndLicense, n
 		}
 	}
 
+	sort.Slice(pls, func(i, j int) bool { return pls[i].Project < pls[j].Project })
+	sort.Slice(ne, func(i, j int) bool { return ne[i].Project < ne[j].Project })
 	return pls, ne
 }
 
