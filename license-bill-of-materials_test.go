@@ -218,8 +218,8 @@ func TestStandardPackages(t *testing.T) {
 func TestOverrides(t *testing.T) {
 	wl := []projectAndLicense{
 		{Project: "colors/broken", License: "GNU General Public License v3.0", Confidence: 1},
-		{Project: "colors/red", License: "override existing", Confidence: 1},
 		{Project: "colors/missing", License: "override missing", Confidence: 1},
+		{Project: "colors/red", License: "override existing", Confidence: 1},
 	}
 	override := `[
 		{"project": "colors/missing", "license": "override missing"},
