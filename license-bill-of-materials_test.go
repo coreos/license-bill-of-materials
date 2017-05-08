@@ -278,11 +278,11 @@ func TestOverrides(t *testing.T) {
 		{Project: "colors/broken", Licenses: []License{
 			{Type: "GNU General Public License v3.0", Confidence: 1}},
 		},
-		{Project: "colors/red", Licenses: []License{
-			{Type: "override existing", Confidence: 1}},
-		},
 		{Project: "colors/missing", Licenses: []License{
 			{Type: "override missing", Confidence: 1}},
+		},
+		{Project: "colors/red", Licenses: []License{
+			{Type: "override existing", Confidence: 1}},
 		},
 	}
 	override := `[
@@ -312,8 +312,7 @@ func TestOverrides(t *testing.T) {
 func TestLongestPrefix(t *testing.T) {
 	tests := []struct {
 		gpackages []GoPackage
-
-		wpfx string
+		wpfx      string
 	}{
 		{
 			[]GoPackage{
