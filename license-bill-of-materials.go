@@ -564,13 +564,11 @@ func groupPackagesByLicense(gpackages []GoPackage) ([]GoPackage, error) {
 
 type projectAndLicenses struct {
 	Project  string    `json:"project"`
-	Licenses []License `json:"licenses,omitempty"`
+	Licenses []license `json:"licenses,omitempty"`
 	Error    string    `json:"error,omitempty"`
 }
 
-// License is the user-facing form of RawLicense, with only license Type and
-// calculated Confidence as fields
-type License struct {
+type license struct {
 	Type       string  `json:"type,omitempty"`
 	Confidence float64 `json:"confidence,omitempty"`
 }
@@ -597,10 +595,10 @@ func licensesToProjectAndLicenses(gpackages []GoPackage) (c []projectAndLicenses
 			})
 			continue
 		}
-		tLicenses := []License{}
+		ls := []license{}
 		for _, rl := range gp.RawLicenses {
 			if rl.Template.Title != "" {
-				tLicenses = append(tLicenses, License{
+				ls = append(ls, license{
 					Type:       rl.Template.Title,
 					Confidence: rl.Score,
 				})
@@ -608,7 +606,7 @@ func licensesToProjectAndLicenses(gpackages []GoPackage) (c []projectAndLicenses
 		}
 		c = append(c, projectAndLicenses{
 			Project:  removeVendor(gp.PackageName),
-			Licenses: tLicenses,
+			Licenses: ls,
 		})
 	}
 	return c, e
@@ -656,11 +654,11 @@ func pkgsToLicenses(pkgs []string, overrides string) (pls []projectAndLicenses, 
 
 	// detected licenses
 	pls = nil
-	ls := []License{}
+	ls := []license{}
 	for _, pl := range c {
 		if fl, ok := fplm[pl.Project]; ok {
 			for _, l := range fl {
-				ls = append(ls, License{
+				ls = append(ls, license{
 					Type:       l,
 					Confidence: 1.0,
 				})
@@ -677,7 +675,7 @@ func pkgsToLicenses(pkgs []string, overrides string) (pls []projectAndLicenses, 
 	ls = nil
 	for proj, fl := range fplm {
 		for _, l := range fl {
-			ls = append(ls, License{
+			ls = append(ls, license{
 				Type:       l,
 				Confidence: 1.0,
 			})
