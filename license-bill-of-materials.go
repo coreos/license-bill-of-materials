@@ -305,10 +305,11 @@ func getPackagesInfo(gopath string, pkgs []string) ([]*PkgInfo, error) {
 	}
 	infos := make([]*PkgInfo, 0, len(pkgs))
 	decoder := json.NewDecoder(bytes.NewBuffer(out))
+	var derr error
 	for _, pkg := range pkgs {
 		info := &PkgInfo{}
-		err = decoder.Decode(info)
-		if err != nil {
+		derr = decoder.Decode(info)
+		if derr != nil {
 			return nil, fmt.Errorf("could not retrieve package information for %s", pkg)
 		}
 		if pkg != info.ImportPath {
@@ -417,10 +418,10 @@ func listPackagesWithLicenses(gopath string, pkgs []string) ([]GoPackage, error)
 	// subpackages like bleve.
 	matched := map[string]MatchResult{}
 
-	gpackages := []GoPackage{}
+	gPackages := []GoPackage{}
 	for _, info := range infos {
 		if info.Error != nil {
-			gpackages = append(gpackages, GoPackage{
+			gPackages = append(gPackages, GoPackage{
 				PackageName: info.Name,
 				Err:         info.Error.Err,
 				RawLicenses: []*RawLicense{{Path: ""}},
@@ -435,7 +436,7 @@ func listPackagesWithLicenses(gopath string, pkgs []string) ([]GoPackage, error)
 			return nil, err
 		}
 		rawLicenseInfos := []*RawLicense{}
-		gpackage := GoPackage{PackageName: info.ImportPath}
+		gPackage := GoPackage{PackageName: info.ImportPath}
 		for _, path := range paths {
 			rl := RawLicense{Path: path}
 			if path != "" {
@@ -456,15 +457,15 @@ func listPackagesWithLicenses(gopath string, pkgs []string) ([]GoPackage, error)
 			}
 			rawLicenseInfos = append(rawLicenseInfos, &rl)
 		}
-		gpackage.RawLicenses = rawLicenseInfos
-		gpackages = append(gpackages, gpackage)
+		gPackage.RawLicenses = rawLicenseInfos
+		gPackages = append(gPackages, gPackage)
 	}
-	return gpackages, nil
+	return gPackages, nil
 }
 
 // longestCommonPrefix returns the longest common prefix over import path
 // components of supplied licenses.
-func longestCommonPrefix(gpackages []GoPackage) string {
+func longestCommonPrefix(gPackages []GoPackage) string {
 	type Node struct {
 		Name     string
 		Children map[string]*Node
@@ -473,9 +474,9 @@ func longestCommonPrefix(gpackages []GoPackage) string {
 	// Build a prefix tree. Not super efficient, but easy to do.
 	root := &Node{
 		Children: map[string]*Node{},
-		Shared:   len(gpackages),
+		Shared:   len(gPackages),
 	}
-	for _, l := range gpackages {
+	for _, l := range gPackages {
 		n := root
 		for _, part := range strings.Split(l.PackageName, "/") {
 			c := n.Children[part]
@@ -497,7 +498,7 @@ func longestCommonPrefix(gpackages []GoPackage) string {
 			break
 		}
 		for _, c := range n.Children {
-			if c.Shared == len(gpackages) {
+			if c.Shared == len(gPackages) {
 				// Handle case where there are subpackages:
 				// prometheus/procfs
 				// prometheus/procfs/xfs
@@ -513,9 +514,9 @@ func longestCommonPrefix(gpackages []GoPackage) string {
 // groupPackagesByLicense returns the input packages after grouping them by license
 // path and find their longest import path common prefix. Entries with empty
 // paths are left unchanged.
-func groupPackagesByLicense(gpackages []GoPackage) ([]GoPackage, error) {
+func groupPackagesByLicense(gPackages []GoPackage) ([]GoPackage, error) {
 	paths := map[string][]GoPackage{}
-	for _, gp := range gpackages {
+	for _, gp := range gPackages {
 		for _, rl := range gp.RawLicenses {
 			if rl.Path == "" {
 				continue
@@ -540,7 +541,7 @@ func groupPackagesByLicense(gpackages []GoPackage) ([]GoPackage, error) {
 	// Ensures only one package with multiple licenses is appended to the list of
 	// kept packages
 	seen := make(map[string]bool)
-	for _, gp := range gpackages {
+	for _, gp := range gPackages {
 		if len(gp.RawLicenses) == 0 {
 			kept = append(kept, gp)
 			continue
@@ -573,8 +574,8 @@ type license struct {
 	Confidence float64 `json:"confidence,omitempty"`
 }
 
-func licensesToProjectAndLicenses(gpackages []GoPackage) (c []projectAndLicenses, e []projectAndLicenses) {
-	for _, gp := range gpackages {
+func licensesToProjectAndLicenses(gPackages []GoPackage) (c []projectAndLicenses, e []projectAndLicenses) {
+	for _, gp := range gPackages {
 		if gp.Err != "" {
 			e = append(e, projectAndLicenses{
 				Project: removeVendor(gp.PackageName),
