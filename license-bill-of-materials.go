@@ -198,15 +198,6 @@ func fixEnv(gopath string) []string {
 	return kept
 }
 
-// MissingError reports on missing licenses
-type MissingError struct {
-	Err string
-}
-
-func (err *MissingError) Error() string {
-	return err.Err
-}
-
 // expandPackages takes a list of package or package expressions and invoke go
 // list to expand them to packages. In particular, it handles things like "..."
 // and ".".
@@ -217,13 +208,8 @@ func expandPackages(gopath string, pkgs []string) ([]string, error) {
 	cmd.Env = fixEnv(gopath)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		output := string(out)
-		if strings.Contains(output, "cannot find package") ||
-			strings.Contains(output, "no buildable Go source files") {
-			return nil, &MissingError{Err: output}
-		}
 		return nil, fmt.Errorf("'go %s' failed with:\n%s",
-			strings.Join(args, " "), output)
+			strings.Join(args, " "), string(out))
 	}
 	names := []string{}
 	for _, s := range strings.Split(string(out), "\n") {
@@ -246,13 +232,8 @@ func listPackagesAndDeps(gopath string, pkgs []string) ([]string, error) {
 	cmd.Env = fixEnv(gopath)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		output := string(out)
-		if strings.Contains(output, "cannot find package") ||
-			strings.Contains(output, "no buildable Go source files") {
-			return nil, &MissingError{Err: output}
-		}
 		return nil, fmt.Errorf("'go %s' failed with:\n%s",
-			strings.Join(args, " "), output)
+			strings.Join(args, " "), string(out))
 	}
 	deps := []string{}
 	seen := map[string]bool{}
@@ -395,9 +376,6 @@ func listPackagesWithLicenses(gopath string, pkgs []string) ([]GoPackage, error)
 	}
 	deps, err := listPackagesAndDeps(gopath, pkgs)
 	if err != nil {
-		if _, ok := err.(*MissingError); ok {
-			return nil, err
-		}
 		return nil, fmt.Errorf("could not list %s dependencies: %s",
 			strings.Join(pkgs, " "), err)
 	}

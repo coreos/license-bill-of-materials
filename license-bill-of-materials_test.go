@@ -166,9 +166,6 @@ func TestMissingPackage(t *testing.T) {
 	if err == nil {
 		t.Fatal("no error on missing package")
 	}
-	if _, ok := err.(*MissingError); !ok {
-		t.Fatalf("MissingError expected")
-	}
 }
 
 func TestMismatch(t *testing.T) {
@@ -187,9 +184,6 @@ func TestNoBuildableGoSourceFiles(t *testing.T) {
 	_, err := listTestLicenses([]string{"colors/cmd"})
 	if err == nil {
 		t.Fatal("no error on missing package")
-	}
-	if _, ok := err.(*MissingError); !ok {
-		t.Fatalf("MissingError expected")
 	}
 }
 
