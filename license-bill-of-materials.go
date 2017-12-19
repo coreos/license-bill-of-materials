@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pmezard/licenses/assets"
+	"github.com/coreos/license-bill-of-materials/assets"
 )
 
 // Template holds pre-constructed license template info
