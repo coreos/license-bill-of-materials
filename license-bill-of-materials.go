@@ -330,9 +330,9 @@ func scoreLicenseName(name string) int8 {
 // returns a slice of paths all viable files, or a slice containing one empty
 // string if none were found.
 func findLicenses(info *PkgInfo) ([]string, error) {
-	path := info.ImportPath
-	for ; path != "."; path = filepath.Dir(path) {
-		fis, err := ioutil.ReadDir(filepath.Join(info.Root, "src", path))
+	path := info.Dir
+	for ; path != filepath.Dir(info.Root); path = filepath.Dir(path) {
+		fis, err := ioutil.ReadDir(path)
 		if err != nil {
 			return []string{""}, err
 		}
@@ -418,15 +418,14 @@ func listPackagesWithLicenses(gopath string, pkgs []string) ([]GoPackage, error)
 		for _, path := range paths {
 			rl := RawLicense{Path: path}
 			if path != "" {
-				fpath := filepath.Join(info.Root, "src", path)
-				m, ok := matched[fpath]
+				m, ok := matched[path]
 				if !ok {
-					data, err := ioutil.ReadFile(fpath)
+					data, err := ioutil.ReadFile(path)
 					if err != nil {
 						return nil, err
 					}
 					m = matchTemplates(data, templates)
-					matched[fpath] = m
+					matched[path] = m
 				}
 				rl.Score = m.Score
 				rl.Template = m.Template
